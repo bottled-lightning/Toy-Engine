@@ -1,3 +1,3 @@
-#include "glModule.h"
+#include "../include/glModule.h"
 
 glEventChannel glModule::channel;

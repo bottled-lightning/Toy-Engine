@@ -5,6 +5,8 @@
 
 class glVideo : public glModule {
 public:
+    using glModule::glModule;
+    // this constructor should not be necessary in gcc
 	glVideo(const char *name)
 		: glModule(name) { }
 	virtual ~glVideo() { }
