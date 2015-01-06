@@ -1,181 +1,109 @@
-#include "../include/glEventChannel.h"
-#include "../include/glTaskManager.h"
-#include "../include/glEventQueue.h"
-#include "../include/glModule.h"
-
 #include <boost/program_options.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-
 #include <iostream>
-#include <sstream>
-#include <memory>
-#include <vector>
-#include <string>
+#include <cstdlib>
+#include <map>
+
+#include "glConfigurationValues.h"
+#include "glException.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#elif __unix
-#include <dlfcn.h>
 #endif
 
 const std::string VERSION = "0.0.1";
-const std::string DEFAULT_DEBUG = "debug.log";
-const std::string DEFAULT_INI = "module_configuration.ini";
-const int NUMTHREAD = 1;
+const int DEFAULT_NUMTHREAD = 1;
 
-// TODO: Just make it return an int, take modules by reference
-std::vector<std::unique_ptr<glModule>> loadModules(const std::string &modules_ini_path,
-                                                   boost::property_tree::ptree &pt);
-void startupModules(std::vector<std::unique_ptr<glModule>> &modules);
-void cleanupModules(std::vector<std::unique_ptr<glModule>> &modules);
-
-bool handleCommandLineArguments(int argc, char **argv, boost::program_options::variables_map &vm);
+bool handleCommandLineArguments(int argc, char **argv, std::string &config_path, std::string &modules_path);
+bool handleConfigurationOptions(const std::string &config_path, std::string &modules_path, glConfigurationValues &values);
 
 int main(int argc, char **argv) {
+    std::string config_path, modules_path;
 
-    std::ios_base::sync_with_stdio(false);
-
-    // populate variable map with command line arguments
-    boost::program_options::variables_map vm;
-    if(handleCommandLineArguments(argc, argv, vm) == false)
+    // parse command line options, want to eventually end up with a config_path
+    if(!handleCommandLineArguments(argc, argv, config_path, modules_path))
         return 1;
 
-    // dynamically load objects from modules folder
-    boost::property_tree::ptree pt;
-    std::vector<std::unique_ptr<glModule>> modules =
-        loadModules(vm["module_ini"].as<std::string>(), pt);
-    if(modules.empty())
+    // parse config file, make sure we have a modules_path by now
+    glConfigurationValues values;
+    if(!handleConfigurationOptions(config_path, modules_path, values))
         return 1;
 
-    // global classes must interact at this level
-    glTaskManager manager(glModule::channel);
-    glEventQueue queue(glModule::channel);
-
-    startupModules(modules);
-    // TODO: spawn appropriate number of threads?
-    manager.sendStartEvent();
-    while(!manager.shouldClose()) {
-        // TODO: change to pollTasks?
-        // Functionally is that what we want?
-        manager.pollEvents();
-        // TODO: regulate to keep frame rate at 60 FPS?
-        // NOTE: make this the glVideo module's job
-        // so that only glVideo's latency suffers
-        // rather than the main loop's!
-    }
-    cleanupModules(modules);
+    // import plugins
 
     return 0;
 }
 
-bool handleCommandLineArguments(int argc, char **argv, boost::program_options::variables_map &vm) {
-    try {
+bool handleCommandLineArguments(int argc, char **argv, std::string &config_path, std::string &modules_path) {
 
-        // list the possible options, their descriptions, and some default values
+    try {
         namespace po = boost::program_options;
-        po::options_description description("Command line options");
-        description.add_options()
-            ("help,h", "lists options")
-            ("version,V", "current version of Toy Engine")
-            ("num_threads,t", po::value<int>()->default_value(NUMTHREAD),
-                "set number of threads")
-            ("debug_log,D", po::value<std::string>()->default_value(DEFAULT_DEBUG),
-                "set location of debug log")
-            ("module_ini,I", po::value<std::string>()->default_value(DEFAULT_INI),
-                "set path to the module configuration file")
+
+        boost::program_options::variables_map vm;
+        po::options_description opts_desc("Command line options");
+        opts_desc.add_options()
+            ("help,h", "usage")
+            ("version,v", "current version of Toy Engine")
+            ("config_path,f", po::value<std::string>(), "set path to module config file")
+            ("modules_path,l", po::value<std::string>(), "set path to module shared lib")
         ;
 
         // parse the arguments and put them into the variable map
-        po::store(po::parse_command_line(argc, argv, description), vm);
+        po::store(po::parse_command_line(argc, argv, opts_desc), vm);
+
+        po::notify(vm);
         if(vm.count("help")) {
-            std::cout << description << std::endl;
+            std::cout << opts_desc << std::endl;
             return false;
         } else if(vm.count("version")) {
             std::cout << "Toy Engine version " << VERSION << std::endl;
             return false;
         }
+
+#ifdef _WIN32
+        // TODO: Support Unicode (LPSTR supports unicode, c++ char does not)
+        char c_style_environment[100];
+        GetEnvironmentVariable("TOYENGINE_CFG", c_style_environment, 100);
+#else
+        char *c_style_environment = std::getenv("TOYENGINE_CFG");
+#endif
+
+        // if we got a valid config_path, we are done, otherwise look at environment variables
+        if(vm.count("config_path"))
+            config_path = vm["config_path"].as<std::string>();
+        else if(c_style_environment != nullptr)
+            config_path = c_style_environment;
+        else
+            throw glException("Did not find path to config file either with -I "
+                              "or in environment variable TOYENGINE_CFG\n");
+
+        // modules_path may or may not be defined here
+        if(vm.count("modules_path"))
+            modules_path = vm["modules_path"].as<std::string>();
+
     } catch(std::exception &e) {
         std::cerr << e.what() << std::endl;
         return false;
     } catch(...) {
-        std::cerr << "Unknown Failure" << std::endl;
+        std::cerr << "Unknown Error" << std::endl;
         return false;
     }
 
     return true;
 }
 
-std::vector<std::unique_ptr<glModule>> loadModules(const std::string &modules_ini_path,
-                                                   boost::property_tree::ptree &pt) {
-
-    std::vector<std::unique_ptr<glModule>> modules;
+bool handleConfigurationOptions(const std::string &config_path, std::string &modules_path, glConfigurationValues &values) {
 
     try {
-        boost::property_tree::ini_parser::read_ini(modules_ini_path, pt);
-        const std::string module_dl_path =
-            pt.get<std::string>("module_import.module_lib_path");
 
-        // turn comma delimited list into vector of strings
-        std::stringstream ss;
-        ss << pt.get<std::string>("module_import.module_classes");
-        std::string temp;
-        std::vector<std::string> module_classes;
-        while(std::getline(ss, temp, ','))
-            module_classes.push_back(std::move(temp));
 
-        // our temporary prototype
-        typedef glModule * (*export_module_func_t)(void);
-
-#ifdef _WIN32
-        HMODULE modules_library = LoadLibrary((LPCTSTR) module_dl_path.c_str());
-        if(modules_library == NULL)
-            throw std::exception("Could not find " + module_dl_path);
-        for(unsigned int i = 0; i < module_classes.size(); ++i) {
-            FARPROC export_module_func =
-                GetProcAddress(modules_library, (LPCSTR) OBTAIN_MODULE(module_classes[i]).c_str());
-            if(export_module_func == NULL)
-                throw std::exception("Could not export module " + module_classes[i]);
-            modules.push_back(
-                std::unique_ptr<glModule>(
-                    ((export_module_func_t) export_module_func)()
-                )
-            );
-        }
-#elif __unix
-        void *modules_library = dlopen(module_dl_path.c_str(), RTLD_LAZY);
-        if(modules_library == NULL)
-            throw std::exception("Could not find " + module_dl_path);
-        for(unsigned int i = 0; i < module_classes.size(); ++i) {
-            void *export_module_func =
-                dlsym(modules_library, OBTAIN_MODULE(module_classes[i]).c_str());
-            if(export_module_func == NULL)
-                throw std::exception("Could not export module " + module_classes[i]);
-            modules.push_back(
-                std::unique_ptr<glModule>(
-                    ((export_module_func_t) export_module_func)()
-                )
-            );
-        }
-#else
-        throw std::exception("Unsupported platform");
-#endif
+        if(modules_path == "" && values.find("modules_path") == values.end())
+            throw glException("Did not specify path to modules shared library "
+                              "either with -L or in the config file as modules_path");
     } catch(std::exception &e) {
         std::cerr << e.what() << std::endl;
-        modules.clear();
-        return modules;
+        return false;
     }
 
-    return modules;
-}
-
-void startupModules(std::vector<std::unique_ptr<glModule>> &modules) {
-    for(auto &module : modules)
-        module->startup();
-}
-
-void cleanupModules(std::vector<std::unique_ptr<glModule>> &modules) {
-    for(auto &module : modules)
-        module->cleanup();
+    return true;
 }
