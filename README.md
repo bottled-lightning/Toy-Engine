@@ -14,9 +14,8 @@ How to Build
 - `make modules` to build modules.so or .dll
 
 Note: Due to limitations in cmake, adding modules to your project requires you to run cmake again before running `make modules`
-Double note: MinGW on Windows specifically only partially supports the C++11 features we are planning to use so, at least on Windows, please use MSVC 13 and up or [MinGW-w64](http://mingw-w64.sourceforge.net/download.php#mingw-builds)
 
-MSVC++ will compile the project just fine, but the makefile will not support it.
+Double note: MinGW on Windows specifically only partially supports the C++11 features we are planning to use so, at least on Windows, please use MSVC 13 and up or [MinGW-w64](http://mingw-w64.sourceforge.net/download.php#mingw-builds)
 
 ###How to Use Custom Grammar
 - edit provided flex and bison files and compile as normally
