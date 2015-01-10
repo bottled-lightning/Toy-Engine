@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GLCONFIGURATIONVALUES_H_
 #define INCLUDE_GLCONFIGURATIONVALUES_H_
 
-#include <boost/any.hpp>
+namespace boost { class any; }
 
 class glConfigurationValues : public std::map<std::string, boost::any> {
 public:

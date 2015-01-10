@@ -1,7 +1,6 @@
 #include <boost/program_options.hpp>
+#include <boost/any.hpp>
 #include <iostream>
-#include <cstdlib>
-#include <map>
 
 #include "glConfigurationValues.h"
 #include "glException.h"
@@ -9,13 +8,20 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#else
+#include <cstdlib> // get environment variable
 #endif
 
-const std::string VERSION = "0.0.1";
+const short int VERSION_MAJOR = 0;
+const short int VERSION_MINOR = 1;
 const int DEFAULT_NUMTHREAD = 1;
 
-bool handleCommandLineArguments(int argc, char **argv, std::string &config_path, std::string &modules_path);
-bool handleConfigurationOptions(const std::string &config_path, std::string &modules_path, glConfigurationValues &values);
+bool handleCommandLineArguments(int argc, char **argv,
+                                std::string &config_path,
+                                std::string &modules_path);
+bool handleConfigurationOptions(const std::string &config_path,
+                                std::string &modules_path,
+                                glConfigurationValues &values);
 
 int main(int argc, char **argv) {
     std::string config_path, modules_path;
@@ -34,7 +40,10 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-bool handleCommandLineArguments(int argc, char **argv, std::string &config_path, std::string &modules_path) {
+bool handleCommandLineArguments(int argc, char **argv,
+                                std::string &config_path,
+                                std::string &modules_path)
+{
 
     try {
         namespace po = boost::program_options;
@@ -56,7 +65,9 @@ bool handleCommandLineArguments(int argc, char **argv, std::string &config_path,
             std::cout << opts_desc << std::endl;
             return false;
         } else if(vm.count("version")) {
-            std::cout << "Toy Engine version " << VERSION << std::endl;
+            std::cout << "Toy Engine version "
+                      << VERSION_MAJOR << "."
+                      << VERSION_MINOR << std::endl;
             return false;
         }
 
@@ -92,7 +103,10 @@ bool handleCommandLineArguments(int argc, char **argv, std::string &config_path,
     return true;
 }
 
-bool handleConfigurationOptions(const std::string &config_path, std::string &modules_path, glConfigurationValues &values) {
+bool handleConfigurationOptions(const std::string &config_path,
+                                std::string &modules_path,
+                                glConfigurationValues &values)
+{
 
     try {
 

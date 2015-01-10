@@ -6,7 +6,7 @@ As-is the current project compiles and runs a simple mandelbrot using two glModu
 
 How to Build
 ============
-- install flex and bison (optional), Boost Signals2, Boost Program Options, Boost Log
+- install flex and bison (optional), Boost Signals2, Boost Program Options, Boost Log, Boost Any
 - for the demo modules, install OpenGL libraries, glfw and GLEW
 - (optional) configure flex and bison to generate custom grammar modules and `make configuration` (planned, not yet implemented!!!)
 - `cmake [ -DBOOST_ROOT=path/to/boost]`

@@ -13,12 +13,13 @@ find_package(Boost 1.54.0 COMPONENTS REQUIRED program_options log signals)
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${Toy-Engine_SOURCE_DIR}/include)
 
+# other targets, want to link config_parser
+add_subdirectory(config_parser)
+add_subdirectory(modules EXCLUDE_FROM_ALL)
+
 add_executable(${CMAKE_PROJECT_NAME}
   src/glEntry.cpp
 )
 
 target_link_libraries(${CMAKE_PROJECT_NAME} ${Boost_LIBRARIES})
-
-add_library(modules SHARED
-  modules/module.cpp
-)
+target_link_libraries(${CMAKE_PROJECT_NAME} config_parser)
