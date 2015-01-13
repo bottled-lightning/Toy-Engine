@@ -22,4 +22,4 @@ Toy-Engine executable looks for configuration file path in environment variable 
 
 ###Usage
 - `TOYENGINE_CFG=~/config.cfg && ./Toy-Engine`
-- `./Toy-Engine -I ~/config.cfg`
+- `./Toy-Engine -f ~/config.cfg`
