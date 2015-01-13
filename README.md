@@ -6,9 +6,8 @@ As-is the current project compiles and runs a simple mandelbrot using two glModu
 
 How to Build
 ============
-- install flex and bison (optional), Boost Signals2, Boost Program Options, Boost Log, Boost Any
+- Install Boost Signals2, Boost Program Options, Boost Log, Boost Any
 - for the demo modules, install OpenGL libraries, glfw and GLEW
-- (optional) configure flex and bison to generate custom grammar modules and `make configuration` (planned, not yet implemented!!!)
 - `cmake [ -DBOOST_ROOT=path/to/boost]`
 - `make all`
 - `make modules` to build modules.so or .dll
@@ -17,13 +16,9 @@ Note: Due to limitations in cmake, adding modules to your project requires you t
 
 Double note: MinGW on Windows specifically only partially supports the C++11 features we are planning to use so, at least on Windows, please use MSVC 13 and up or [MinGW-w64](http://mingw-w64.sourceforge.net/download.php#mingw-builds)
 
-###How to Use Custom Grammar !!NOT YET IMPLEMENTED!!
-- edit provided flex and bison files and compile as normally
-- `make configuration` to generate c header files and config_parser.so
-
 How to Run
 ==========
-Toy-Engine executable looks for configuration file path in environment variable or labeled on the command line. The configuration file must have the path to the modules shared library outputted by `make modules` in order to dynamically load each plugin.
+Toy-Engine executable looks for configuration file path in environment variable or labeled on the command line. The configuration file must have the path to the modules shared library outputted by `make modules` in order to dynamically load each plugin, or it must be specified on command line. Command line will take precedence.
 
 ###Usage
 - `TOYENGINE_CFG=~/config.cfg && ./Toy-Engine`

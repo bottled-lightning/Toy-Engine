@@ -1,9 +1,8 @@
 #include <boost/program_options.hpp>
-#include <boost/any.hpp>
 #include <iostream>
+#include <fstream>
 
-#include "glConfigurationValues.h"
-#include "glException.h"
+#include "engine/engineException.h"
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -21,7 +20,7 @@ bool handleCommandLineArguments(int argc, char **argv,
                                 std::string &modules_path);
 bool handleConfigurationOptions(const std::string &config_path,
                                 std::string &modules_path,
-                                glConfigurationValues &values);
+                                boost::program_options::variables_map &vm);
 
 int main(int argc, char **argv) {
     std::string config_path, modules_path;
@@ -31,8 +30,8 @@ int main(int argc, char **argv) {
         return 1;
 
     // parse config file, make sure we have a modules_path by now
-    glConfigurationValues values;
-    if(!handleConfigurationOptions(config_path, modules_path, values))
+    boost::program_options::variables_map vm;
+    if(!handleConfigurationOptions(config_path, modules_path, vm))
         return 1;
 
     // import plugins
@@ -51,10 +50,12 @@ bool handleCommandLineArguments(int argc, char **argv,
         boost::program_options::variables_map vm;
         po::options_description opts_desc("Command line options");
         opts_desc.add_options()
-            ("help,h", "usage")
-            ("version,v", "current version of Toy Engine")
-            ("config_path,f", po::value<std::string>(), "set path to module config file")
-            ("modules_path,l", po::value<std::string>(), "set path to module shared lib")
+            ("help,h", "  usage")
+            ("version,v", "  current version of Toy Engine")
+            (",f", po::value<std::string>(), "  set path to module config file,"
+                " will override environment variable TOYENGINE_CFG  if flag is set")
+            (",l", po::value<std::string>(), "  set path to module shared lib,"
+                " will override entry in config file if flag is set")
         ;
 
         // parse the arguments and put them into the variable map
@@ -80,17 +81,17 @@ bool handleCommandLineArguments(int argc, char **argv,
 #endif
 
         // if we got a valid config_path, we are done, otherwise look at environment variables
-        if(vm.count("config_path"))
-            config_path = vm["config_path"].as<std::string>();
+        if(vm.count("-f"))
+            config_path = vm["-f"].as<std::string>();
         else if(c_style_environment != nullptr)
             config_path = c_style_environment;
         else
-            throw glException("Did not find path to config file either with -I "
-                              "or in environment variable TOYENGINE_CFG\n");
+            throw engineException("Did not find path to config file either with -f "
+                                  "or in environment variable TOYENGINE_CFG");
 
         // modules_path may or may not be defined here
-        if(vm.count("modules_path"))
-            modules_path = vm["modules_path"].as<std::string>();
+        if(vm.count("-l"))
+            modules_path = vm["-l"].as<std::string>();
 
     } catch(std::exception &e) {
         std::cerr << e.what() << std::endl;
@@ -105,15 +106,39 @@ bool handleCommandLineArguments(int argc, char **argv,
 
 bool handleConfigurationOptions(const std::string &config_path,
                                 std::string &modules_path,
-                                glConfigurationValues &values)
+                                boost::program_options::variables_map &vm)
 {
 
     try {
 
+        namespace po = boost::program_options;
 
-        if(modules_path == "" && values.find("modules_path") == values.end())
-            throw glException("Did not specify path to modules shared library "
-                              "either with -L or in the config file as modules_path");
+        std::ifstream config_file(config_path.c_str());
+        if(!config_file)
+            throw engineException("Did not specify good configuration file path");
+
+        po::options_description desc("Configuration file options");
+        desc.add_options()
+            ("engine.num_threads", po::value<int>(), "number of threads to run" )
+            ("engine.modules_path", po::value<std::string>(), "path to modules shared library")
+            ("log.log_lvl", po::value<std::string>(), "output file filters messages below this")
+            ("log_output", po::value<std::string>(), "output file path")
+        ;
+
+        po::store(
+            po::parse_config_file(
+                config_file,
+                desc,
+                true // allow_unregistered
+            ),
+            vm
+        );
+
+        po::notify(vm);
+
+        if(modules_path == "" && vm.count("engine.modules_path") == 0)
+            throw engineException("Did not specify path to modules shared library "
+                                  "either with -l or in the config file as modules_path");
     } catch(std::exception &e) {
         std::cerr << e.what() << std::endl;
         return false;
