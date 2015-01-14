@@ -6,11 +6,11 @@ As-is the current project compiles and runs a simple mandelbrot using two glModu
 
 How to Build
 ============
-- Install Boost Signals2, Boost Program Options, Boost Log, Boost Any
-- for the demo modules, install OpenGL libraries, glfw and GLEW
-- `cmake [ -DBOOST_ROOT=path/to/boost]`
+- Install Boost Signals2, Boost Program Options, Boost Log
+- For the demo modules, install OpenGL libraries, glfw and GLEW
+- `cmake [-DBOOST_ROOT=path/to/boost]`
 - `make all`
-- `make modules` to build modules.so or .dll
+- `make modules` to build libmodules.so or .dll
 
 Note: Due to limitations in cmake, adding modules to your project requires you to run cmake again before running `make modules`
 
@@ -18,8 +18,8 @@ Double note: MinGW on Windows specifically only partially supports the C++11 fea
 
 How to Run
 ==========
-Toy-Engine executable looks for configuration file path in environment variable or labeled on the command line. The configuration file must have the path to the modules shared library outputted by `make modules` in order to dynamically load each plugin, or it must be specified on command line. Command line will take precedence.
+Toy-Engine executable looks for configuration file path in environment variable or labeled on the command line. The configuration file must have the path to the modules shared library outputted by `make modules` in order to dynamically load each plugin, or it must be specified on command line. Command line will always take precedence.
 
 ###Usage
-- `TOYENGINE_CFG=~/config.cfg && ./Toy-Engine`
-- `./Toy-Engine -I ~/config.cfg`
+- `export TOYENGINE_CFG=~/config.cfg && ./Toy-Engine`
+- `./Toy-Engine -f ~/config.cfg`
