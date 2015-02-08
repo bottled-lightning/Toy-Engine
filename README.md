@@ -7,6 +7,7 @@ As-is the current project compiles and runs a simple mandelbrot using two glModu
 How to Build
 ============
 - Install Boost Signals2, Boost Program Options, Boost Log
+    - misleadingly, Boost Signals2 is header only and Boost Signals is not necessary
 - For the demo modules, install OpenGL libraries, glfw and GLEW
 - `cmake [-DBOOST_ROOT=path/to/boost]`
 - `make all`

@@ -34,6 +34,8 @@ int main(int argc, char **argv) {
     command_desc.add_options()
         ("help,h", "  usage")
         ("version,v", "  current version of Toy Engine")
+        ("verbose", "  output log to console")
+        ("no_log", "  do not log to file")
         (",f", po::value<std::string>(), "  set path to module config file,"
             " will override environment variable TOYENGINE_CFG if flag is set")
         (",l", po::value<std::string>(), "  set path to module shared lib,"
