@@ -1,0 +1,4 @@
+language: cpp
+script: cmake
+before_install:
+  - sudo apt-get install libboost-program-options-dev libboost-log-dev
