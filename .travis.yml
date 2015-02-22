@@ -2,5 +2,6 @@ language: cpp
 script: 
   - cmake ./ && make -j
 before_install:
+  - sudo apt-add-repository ppa:boost-latest/ppa
+  - sudo apt-get update -qq
   - sudo apt-get install libboost-all-dev
-  - sudo apt-get install libboost-log-dev
