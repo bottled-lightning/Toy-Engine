@@ -3,3 +3,4 @@ script:
   - cmake ./ && make -j
 before_install:
   - sudo apt-get install libboost-all-dev
+  - sudo apt-get install libboost-log-dev
