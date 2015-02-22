@@ -9,7 +9,7 @@ set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
 # signals not needed because BOOST Signals2 is header only
-find_package(Boost 1.54.0 COMPONENTS REQUIRED program_options log)
+find_package(Boost 1.46.1 COMPONENTS REQUIRED program_options log)
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${Toy-Engine_SOURCE_DIR}/include)
