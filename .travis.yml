@@ -2,4 +2,4 @@ language: cpp
 script: 
   - cmake ./ && make -j
 before_install:
-  - sudo apt-get install libboost-dev
+  - sudo apt-get install libboost-all-dev
