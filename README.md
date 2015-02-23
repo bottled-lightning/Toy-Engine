@@ -1,6 +1,7 @@
 Toy Engine
 ==========
 ![build status](https://travis-ci.org/toshipiazza/Toy-Engine.svg?branch=master)
+
 Toy Engine is a game or rendering engine that can be used from the command line. The tool looks for an environment variable TOYENGINE_CFG that contains the path to the configuration file for the project. `make modules` will compile a modules shared library from the modules plugins directory whose path must be specified in the configuration file.
 
 As-is the current project compiles and runs a simple mandelbrot using two glModules, and as such a more complete project will likely use more modules. The modules require OpenGL 4.0 or higher to run and use glfw amd GLEW.
