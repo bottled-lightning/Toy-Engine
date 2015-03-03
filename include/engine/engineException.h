@@ -14,7 +14,7 @@ class engineException : public std::exception {
 public:
     engineException(const char *what) : _what(what) { }
     virtual const char *what() const NOEXCEPT override { return _what; }
-    virtual ~engineException() { }
+    virtual ~engineException() NOEXCEPT { }
 private:
     const char *_what;
 };
